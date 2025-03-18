@@ -1,32 +1,28 @@
-const { Command } = require('commander');
 const fs = require('fs');
-
-const program = new Command();
+const { program } = require('commander');
 
 program
-  .requiredOption('-i, --input <path>', 'Input file path')
-  .option('-o, --output <path>', 'Output file path')
-  .option('-d, --display', 'Display result in console');
+  .requiredOption('-i, --input <path>', 'Path to input JSON file')
+  .option('-o, --output <path>', 'Path to output file')
+  .option('-d, --display', 'Display results in console');
 
 program.parse(process.argv);
-
 const options = program.opts();
 
-if (!fs.existsSync(options.input)) {
-  console.error("Cannot find input file");
-  process.exit(1);
+try {
+  const data = JSON.parse(fs.readFileSync(options.input, 'utf8'));
+
+  const results = data
+    .filter(item => item.txt === "Доходи, усього" || item.txt === 
+"Витрати, усього")
+    .map(item => `${item.txt}: ${item.value}`)
+    .join("\n");
+
+  if (options.display) console.log(results);
+
+  if (options.output) fs.writeFileSync(options.output, results, 'utf8');
+
+} catch (error) {
+  console.error("Error:", error.message);
 }
-
-const data = JSON.parse(fs.readFileSync(options.input, 'utf8'));
-
-const results = data
-  .filter(item => item.indicator === "Доходи, усього" || item.indicator 
-=== "Витрати, усього")
-  .map(item => `${item.indicator}: ${item.value}`)
-  .join("\n");
-
-if (options.display) console.log(results);
-if (options.output) fs.writeFileSync(options.output, results);
-
-
 
